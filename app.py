@@ -4,6 +4,7 @@ import os
 import shutil
 import pandas as pd
 import re
+import openpyxl
 
 app = tk.Tk()
 app.title("FRIB Payroll Validation")
@@ -13,6 +14,9 @@ UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+def on_closing():
+    clear_uploads_folder()
+    app.destroy()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'xlsx', 'xls', 'txt'}
@@ -115,7 +119,8 @@ def run_process():
         try:
             # Read Excel file into a DataFrame
             df = pd.read_excel(app.file_path, header=None)
-
+            if df.astype(str).apply(lambda x: x.str.contains('test', case=False)).any().any():
+                df = df.drop(df[df.astype(str).apply(lambda x: x.str.contains('test', case=False)).any(axis=1)].index, axis=0).reset_index(drop=True)
             # Assign column headers
             headers = ["Person ID", "PERNR", "Sub Account", "Project", "Date", "hours", "wo", "REGU", "Others"]
             df.columns = headers
@@ -138,7 +143,7 @@ def run_process():
                 other_values = row.drop('Project').values.tolist()  
                 rearranged_row = other_values + [project_value]  
                 df.loc[index, :] = rearranged_row  
-
+            
             mask = df['Sub Account'].str.startswith('2').fillna(False)
             for index, row in df[mask].iterrows():
                 sub_account_index = df.columns.get_loc('Sub Account')
@@ -149,13 +154,29 @@ def run_process():
                 df.at[index, 'Project'] = None
 
 
-            df = df.drop(df.index[0], axis=0).reset_index(drop=True) #drops second row which contains test
             save_path = filedialog.asksaveasfilename(defaultextension='.xlsx',filetypes=[("Excel files", "*.xlsx")],title="Save Modified File As")
 
             if save_path:
                 df.to_excel(save_path, index=False, header=True)
                 status_label.config(text=f"File modified successfully and saved as {save_path}")
+
+                # Open the Excel file for further formatting
+                wb = openpyxl.load_workbook(save_path)
+                ws = wb.active
+
+                # Auto-fit columns
+                for column_cells in ws.columns:
+                    length = max(len(str(cell.value)) for cell in column_cells)
+                    ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+                # Apply filter to all columns
+                ws.auto_filter.ref = ws.dimensions
+
+                # Save the workbook
+                wb.save(save_path)
+
                 clear_uploads_folder()
+
             else:
                 status_label.config(text="Save cancelled")
 
@@ -164,12 +185,6 @@ def run_process():
             status_label.config(text="Error: Failed to process the file")
     else:
         status_label.config(text="File path is not valid")
-
-
-
-
-
-
 
 
 
@@ -198,6 +213,7 @@ row_count_button = tk.Button(app, text="Display Row Count", command=display_row_
 row_count_button.pack_forget()
 
 app.file_path = None
+app.protocol("WM_DELETE_WINDOW", on_closing)
 
 if __name__ == "__main__":
     app.mainloop()
