@@ -165,6 +165,8 @@ def run_process():
             df_filtered_by_RC113931 = df[df['Project'].str.contains('RC113931', na=False)]
             df_filtered_by_GA016641 = df[df['Project'].str.contains('GA016641', na=False)]
             df_filtered_by_GA016641 = df_filtered_by_GA016641[df_filtered_by_GA016641['Sub Account'] == 'NO_SUB-ACCOUNT']
+            df_filtered_by_GA016641_MSRC = df[df['Sub Account'].str.startswith('MSRC113931', na=False) & df['Project'].str.startswith('MSGA016641', na=False)]
+
 
             # Review Hours
             
@@ -217,6 +219,10 @@ def run_process():
                 ws_filtered4 = wb.create_sheet(title='GA016641 & NO_Subacounts')
                 for r in dataframe_to_rows(df_filtered_by_GA016641, index=False, header=True):
                     ws_filtered4.append(r)
+
+                ws_filtered5 = wb.create_sheet(title='GA016641 & MSRC')
+                for r in dataframe_to_rows(df_filtered_by_GA016641_MSRC, index=False, header=True):
+                    ws_filtered5.append(r)
 
                 # Apply formatting to all sheets
                 for ws in wb.sheetnames:
