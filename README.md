@@ -2,7 +2,7 @@
 
 # Built in python using Tkinter for FRIB Accounting.
 
-Released beta version for Payroll verification. This software is an executable (.exe) file to run locally on user's computer.
+Released first working test version for Payroll verification. This software is an executable (.exe) file to run locally on user's computer.
 
 This is the complete working version for Payroll verification and will allow accounting team to convert incoming .txt files to an excel spread sheet. Aids in final report building and takes out manual labor effort from Excel.
 
